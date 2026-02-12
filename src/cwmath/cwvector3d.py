@@ -56,7 +56,22 @@ class CwVector3d:
             dot product
         """
         return self._x * other._x + self._y * other._y + self._z * other._z
-    
+
+    def cross(self, other: 'CwVector3d') -> 'CwVector3d':
+        """Calculates the cross product of two vectors (self * other).
+
+        Args:
+            other: vector
+
+        Returns:
+            cross product vector
+        """
+        return CwVector3d(
+            self._y * other._z - self._z * other._y,
+            self._z * other._x - self._x * other._z,
+            self._x * other._y - self._y * other._x,
+        )
+
     def magnitude(self) -> float:
         """ Calculates the magnitude of the vector.
 
