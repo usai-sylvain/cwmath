@@ -1,182 +1,156 @@
 __author__ = 'Brunner'
 __date__ = '13.03.2024'
 
-from math import sqrt
+import cadwork
 from cwmath import cwvector3d
 
 
 class CwPlane3d:
-    """Plane class for 3D planes. """
+    """Plane defined by an origin point and two orthonormal-style axes in the plane.
 
-    def __init__(self, point_3d, normal_vector):
-        self._coefficient_a = normal_vector.x
-        self._coefficient_b = normal_vector.y
-        self._coefficient_c = normal_vector.z
-        self._constant_d = -(self._coefficient_a * point_3d.x + self._coefficient_b * point_3d.y + self._coefficient_c * point_3d.z)   
+    Stored as origin, x_axis, y_axis. The implicit form Ax + By + Cz + D = 0
+    is derived when needed: normal = x_axis * y_axis, then A,B,C from normal,
+    D = -(A*origin.x + B*origin.y + C*origin.z).
+    """
+
+    def __init__(
+        self,
+        origin: "cadwork.point_3d",
+        vector_x: "cwvector3d.CwVector3d",
+        vector_y: "cwvector3d.CwVector3d",
+    ):
+        """Define the plane by one point and two direction vectors in the plane.
+
+        The vectors are normalized and stored as x_axis and y_axis. The normal is
+        x_axis * y_axis; A, B, C, D are computed from that when needed.
+
+        Args:
+            origin: A point on the plane (cadwork.point_3d).
+            vector_x: First direction vector in the plane (not parallel to vector_y).
+            vector_y: Second direction vector in the plane (not parallel to vector_x).
+        """
+        self._origin = origin
+        self._x_axis = vector_x.normalize()
+        self._y_axis = vector_y.normalize()
+
+    @property
+    def origin(self) -> cadwork.point_3d:
+        """A point on the plane (cadwork.point_3d)."""
+        return self._origin
+
+    @property
+    def x_axis(self) -> "cwvector3d.CwVector3d":
+        """Unit direction vector in the plane (first axis)."""
+        return self._x_axis
+
+    @property
+    def y_axis(self) -> "cwvector3d.CwVector3d":
+        """Unit direction vector in the plane (second axis)."""
+        return self._y_axis
+
+    @property
+    def z_axis(self) -> "cwvector3d.CwVector3d":
+        """Normal vector of the plane (x_axis * y_axis)."""
+        return self._x_axis.cross(self._y_axis)
+
+    @property
+    def _d(self) -> float:
+        """Constant term in plane equation: -normal*origin."""
+        normal = self.z_axis
+        return -(normal.x * self._origin.x + normal.y * self._origin.y + normal.z * self._origin.z)
+
+    def _signed_distance(self, point: cadwork.point_3d) -> float:
+        """Signed distance from point to plane: normal*p + d."""
+        normal = self.z_axis
+        return normal.x * point.x + normal.y * point.y + normal.z * point.z + self._d
 
     @property
     def coefficient_a(self) -> float:
-        return self._coefficient_a
-    
-    @coefficient_a.setter
-    def coefficient_a(self, value: float) -> None:
-        self._coefficient_a = value
+        """Coefficient A in Ax + By + Cz + D = 0 (read-only)."""
+        return self.z_axis.x
 
     @property
     def coefficient_b(self) -> float:
-        return self._coefficient_b
-    
-    @coefficient_b.setter
-    def coefficient_b(self, value: float) -> None:
-        self._coefficient_b = value
+        """Coefficient B in Ax + By + Cz + D = 0 (read-only)."""
+        return self.z_axis.y
 
     @property
     def coefficient_c(self) -> float:
-        return self._coefficient_c
-    
-    @coefficient_c.setter
-    def coefficient_c(self, value: float) -> None:
-        self._coefficient_c = value
+        """Coefficient C in Ax + By + Cz + D = 0 (read-only)."""
+        return self.z_axis.z
 
     @property
     def constant_d(self) -> float:
-        return self._constant_d
-    
-    @constant_d.setter
-    def constant_d(self, value: float) -> None:
-        self._constant_d = value
+        """Constant D in Ax + By + Cz + D = 0 (read-only)."""
+        return self._d
 
-    def __call__(self, x: float, y: float, z: float) -> float:
-        """ Calculate the value of the plane at a given point.
-
-        Args:
-            x: x-coordinate of the point
-            y: y-coordinate of the point
-            z: z-coordinate of the point
-
-
-        Returns:
-            float: value of the plane at the given point
-        """
-        return self._coefficient_a * x + self._coefficient_b * y + self._coefficient_c * z + self._constant_d
+    def __call__(self, point: cadwork.point_3d) -> float:
+        """Value of the plane at point: normal*p + d (zero on the plane)."""
+        return self._signed_distance(point)
 
     def __str__(self) -> str:
-        return f'{self._coefficient_a}x + {self._coefficient_b}y + {self._coefficient_c}z + {self._constant_d} = 0'
+        return (
+            f"Origin=[{self._origin.x}, {self._origin.y}, {self._origin.z}], "
+            f"XAxis=[{self.x_axis.x}, {self.x_axis.y}, {self.x_axis.z}], "
+            f"YAxis=[{self.y_axis.x}, {self.y_axis.y}, {self.y_axis.z}]"
+        )
 
     def __repr__(self) -> str:
-        return f'CwPlane3d({self._coefficient_a}, {self._coefficient_b}, {self._coefficient_c}, {self._constant_d})'
+        return (
+            f"CwPlane3d(Origin=[{self._origin.x}, {self._origin.y}, {self._origin.z}], "
+            f"XAxis=[{self.x_axis.x}, {self.x_axis.y}, {self.x_axis.z}], "
+            f"YAxis=[{self.y_axis.x}, {self.y_axis.y}, {self.y_axis.z}])"
+        )
 
-    def __eq__(self, other: 'CwPlane3d') -> bool:
-        return abs(self._coefficient_a - other._coefficient_a) < 1e-6 and abs(
-            self._coefficient_b - other._coefficient_b) < 1e-6 and abs(
-            self._coefficient_c - other._coefficient_c) < 1e-6 and abs(
-            self._constant_d - other._constant_d) < 1e-6
+    def __eq__(self, other: "CwPlane3d") -> bool:
+        if not isinstance(other, CwPlane3d):
+            return NotImplemented
+        normal = self.z_axis
+        other_normal = other.z_axis
+        return (
+            abs(normal.x - other_normal.x) < 1e-6
+            and abs(normal.y - other_normal.y) < 1e-6
+            and abs(normal.z - other_normal.z) < 1e-6
+            and abs(self._d - other._d) < 1e-6
+        )
 
-    def __ne__(self, other: 'CwPlane3d') -> bool:
+    def __ne__(self, other: "CwPlane3d") -> bool:
         return not self.__eq__(other)
 
-    def __iter__(self):
-        yield self._coefficient_a
-        yield self._coefficient_b
-        yield self._coefficient_c
-        yield self._constant_d
+    def is_parallel(self, other: "CwPlane3d") -> bool:
+        """True if the two planes have parallel normals."""
+        return self.z_axis.cross(other.z_axis).magnitude() < 1e-6
 
-    def __getitem__(self, index: int) -> float:
-        return (self._coefficient_a, self._coefficient_b, self._coefficient_c, self._constant_d)[index]
+    def is_perpendicular(self, other: "CwPlane3d") -> bool:
+        """True if the two planes have perpendicular normals."""
+        return abs(self.z_axis.dot(other.z_axis)) < 1e-6
 
-    def __setitem__(self, index: int, value: float) -> None:
-        if index == 0:
-            self._coefficient_a = value
-        elif index == 1:
-            self._coefficient_b = value
-        elif index == 2:
-            self._coefficient_c = value
-        elif index == 3:
-            self._constant_d = value
+    def is_coplanar(self, other: "CwPlane3d") -> bool:
+        """True if the two planes coincide (same normal and same d up to scale)."""
+        normal = self.z_axis
+        other_normal = other.z_axis
+        if abs(other_normal.x) < 1e-10:
+            return abs(normal.x) < 1e-10
+        if abs(other_normal.y) < 1e-10:
+            return abs(normal.y) < 1e-10
+        if abs(other_normal.z) < 1e-10:
+            return abs(normal.z) < 1e-10
+        return (
+            abs(normal.x / other_normal.x - normal.y / other_normal.y) < 1e-6
+            and abs(normal.y / other_normal.y - normal.z / other_normal.z) < 1e-6
+            and abs(self._d / other._d - normal.x / other_normal.x) < 1e-6
+        )
 
-    def is_parallel(self, other: 'CwPlane3d') -> bool:
-        """ Checks if two planes are parallel.
+    def is_point_on_plane(self, point: "cadwork.point_3d") -> bool:
+        """True if the point lies on the plane."""
+        return abs(self._signed_distance(point)) < 1e-6
 
-        Args:
-            other: 3d plane
+    def distance_to_point(self, point: "cadwork.point_3d") -> float:
+        """Distance from the point to the plane."""
+        normal = self.z_axis
+        return abs(self._signed_distance(point)) / normal.magnitude()
 
-        Returns:
-            if the planes are parallel
-        """
-        return abs(self._coefficient_a * other._coefficient_b - self._coefficient_b * other._coefficient_a) < 1e-6 and abs(
-            self._coefficient_a * other._coefficient_c - self._coefficient_c * other._coefficient_a) < 1e-6 and abs(
-            self._coefficient_b * other._coefficient_c - self._coefficient_c * other._coefficient_b) < 1e-6
-
-    def is_perpendicular(self, other: 'CwPlane3d') -> bool:
-        """ Checks if two planes are perpendicular.
-
-        Args:
-            other: 3d plane
-
-        Returns:
-            if the planes are perpendicular
-        """
-        return abs(
-            self._coefficient_a * other._coefficient_a + self._coefficient_b * other._coefficient_b + self._coefficient_c * other._coefficient_c) < 1e-6
-
-    def is_coplanar(self, other: 'CwPlane3d') -> bool:
-        """ Checks if two planes are coplanar.
-
-        Args:
-            other: 3d plane
-
-        Returns:
-            if the planes are coplanar
-        """
-        if other._coefficient_a == 0:
-            return self._coefficient_a == 0
-        if other._coefficient_b == 0:
-            return self._coefficient_b == 0
-        if other._coefficient_c == 0:
-            return self._coefficient_c == 0
-
-        return self._coefficient_a / other._coefficient_a \
-                == self._coefficient_b / other._coefficient_b \
-                == self._coefficient_c / other._coefficient_c
-
-    def is_point_on_plane(self, point: 'cwvector3d.CwVector3d') -> bool:
-        """ Checks if a point is on the plane.
-
-        Args:
-            point: point
-
-        Returns:
-            if the point is on the plane
-        """
-        return abs(
-            self._coefficient_a * point.x + self._coefficient_b * point.y + self._coefficient_c * point.z + self._constant_d) < 1e-6
-
-    def distance_to_point(self, point: 'cwvector3d.CwVector3d') -> float:
-        """ Calculates the distance from a point to the plane.
-        The distance from a point to a plane is given by the formula:
-        |ax + by + cz + d| / sqrt(a^2 + b^2 + c^2)
-        where (a, b, c) is the normal vector of the plane,
-        (x, y, z) are the coordinates of the point, and
-        d is the constant term in the plane equation.
-
-        Args:
-            point: point
-
-        Returns:
-            distance from the point to the plane
-        """
-        numerator = abs(self._coefficient_a * point.x + self._coefficient_b * point.y + self._coefficient_c * point.z + self._constant_d)
-        denominator = sqrt(self._coefficient_a**2 + self._coefficient_b**2 + self._coefficient_c**2)
-        return numerator / denominator
-
-    def distance_to_plane(self, other: 'CwPlane3d') -> float:
-        """ Calculates the distance from a plane to another plane.
-
-        Args:
-            other: 3d plane
-
-        Returns:
-            distance to plane
-        """
-        return abs(self._constant_d - other._constant_d) / sqrt(
-            self._coefficient_a ** 2 + self._coefficient_b ** 2 + self._coefficient_c ** 2)
+    def distance_to_plane(self, other: "CwPlane3d") -> float:
+        """Distance between two parallel planes (undefined if not parallel)."""
+        normal = self.z_axis
+        return abs(self._d - other._d) / normal.magnitude()
