@@ -1,6 +1,8 @@
 __author__ = 'Brunner'
 __date__ = '13.03.2024'
 
+import cadwork
+
 
 class CwVector3d:
     """Vector class for 3D vectors."""
@@ -21,6 +23,10 @@ class CwVector3d:
             vector
         """
         return cls(point_3d.x, point_3d.y, point_3d.z)
+    
+    @property
+    def point_3d(self) -> 'cadwork.point_3d':
+        return cadwork.point_3d(self._x, self._y, self._z)
 
     @property
     def x(self) -> float:
