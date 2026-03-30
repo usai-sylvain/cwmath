@@ -10,6 +10,7 @@ from . import cwplane3d
 from . import cwvector3d
 
 if TYPE_CHECKING:
+    from . import cwbox3d
     from . import cwelement
 
 # Max distance between closest points on two lines to treat as intersecting.
@@ -140,11 +141,11 @@ class CwIntersection:
         cls,
         element_a: cwelement.CwElement,
         element_b: cwelement.CwElement,
-    ) -> cwelement.CwElementIntersection:
+    ) -> cwbox3d.CwBoxIntersection:
         """Intersect two element boxes (P1–P3 / XL–ZL oriented boxes).
 
         Returns:
-            :class:`~cwelement.CwElementIntersection` with ``intersection_lines`` (each
+            :class:`~cwbox3d.CwBoxIntersection` with ``intersection_lines`` (each
             :class:`~cwline3d.CwLine3d` is an edge of the overlap boundary) and
             ``intersection_average_point`` (mean of segment midpoints, or ``None`` if empty).
         """

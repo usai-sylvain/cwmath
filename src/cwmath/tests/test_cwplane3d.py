@@ -49,8 +49,7 @@ def test_ne(plane_1):
 
 
 def test_origin_and_axes_stored(plane_1):
-    """Plane stores origin (point_3d) and x_axis, y_axis; coefficients are derived."""
-    pytest.importorskip("cadwork")
+    """Plane stores origin and x_axis, y_axis; coefficients are derived."""
     assert plane_1.origin.x == approx(-42.5)
     assert plane_1.origin.y == approx(47.5)
     assert plane_1.origin.z == approx(2480.0)

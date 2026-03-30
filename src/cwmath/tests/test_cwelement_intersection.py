@@ -3,8 +3,8 @@ from _pytest.python_api import approx
 
 from cwmath import cwintersection
 from cwmath import cwvector3d
-from cwmath.cwelement import _BoxGeom
-from cwmath.cwelement import intersection_lines_between_boxes
+from cwmath.cwbox3d import CwOrientedBox3d
+from cwmath.cwbox3d import intersection_lines_between_boxes
 
 
 def _axis_aligned() -> tuple[
@@ -21,8 +21,8 @@ def _axis_aligned() -> tuple[
 
 def test_intersection_lines_disjoint_boxes():
     xl, yl, zl = _axis_aligned()
-    a = _BoxGeom(cwvector3d.CwVector3d(0, 0, 0), xl, yl, zl, 1.0, 1.0, 1.0)
-    b = _BoxGeom(cwvector3d.CwVector3d(5, 0, 0), xl, yl, zl, 1.0, 1.0, 1.0)
+    a = CwOrientedBox3d(cwvector3d.CwVector3d(0, 0, 0), xl, yl, zl, 1.0, 1.0, 1.0)
+    b = CwOrientedBox3d(cwvector3d.CwVector3d(5, 0, 0), xl, yl, zl, 1.0, 1.0, 1.0)
     got = intersection_lines_between_boxes(a, b)
     assert got.intersection_lines == []
     assert got.intersection_average_point is None
@@ -30,8 +30,8 @@ def test_intersection_lines_disjoint_boxes():
 
 def test_intersection_lines_overlapping_cubes_twelve_edges():
     xl, yl, zl = _axis_aligned()
-    a = _BoxGeom(cwvector3d.CwVector3d(0, 0, 0), xl, yl, zl, 2.0, 2.0, 2.0)
-    b = _BoxGeom(cwvector3d.CwVector3d(1, 0, 0), xl, yl, zl, 2.0, 2.0, 2.0)
+    a = CwOrientedBox3d(cwvector3d.CwVector3d(0, 0, 0), xl, yl, zl, 2.0, 2.0, 2.0)
+    b = CwOrientedBox3d(cwvector3d.CwVector3d(1, 0, 0), xl, yl, zl, 2.0, 2.0, 2.0)
     got = intersection_lines_between_boxes(a, b)
     assert len(got.intersection_lines) == 12
     # Overlap [1,2] x [0,2] x [0,2]
