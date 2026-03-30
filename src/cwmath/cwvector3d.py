@@ -2,6 +2,7 @@ __author__ = 'Brunner'
 __date__ = '13.03.2024'
 
 import cadwork
+import element_controller as ec
 
 
 class CwVector3d:
@@ -27,6 +28,11 @@ class CwVector3d:
     @property
     def point_3d(self) -> 'cadwork.point_3d':
         return cadwork.point_3d(self._x, self._y, self._z)
+    
+    def bake(self) -> int:
+        """ add the vector to the cadwork model """
+        vector_id = ec.create_node(self.point_3d)
+        return vector_id
 
     @property
     def x(self) -> float:
